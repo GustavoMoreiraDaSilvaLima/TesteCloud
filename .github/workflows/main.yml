@@ -38,4 +38,7 @@ jobs:
                 key: ${{ secrets.key }}
                 port: 22
                 #server é nome da nossa aplicação no PM2
-                script: pm2 restart app
+                script: |
+                    cd /home/ubuntu/sistema
+                    npm install
+                    pm2 restart app
