@@ -1,0 +1,41 @@
+name: Publicação automática
+on:
+    #nosso script será executado sempre quando houver push e pull request nas branches destacadas abaixo
+    push:
+        branches: [ "main" ]
+    pull_request:
+        branches: [ "main" ]
+jobs:
+    build:
+        #sistema operacional da máquina que o Github irá disponibilizar para rodar o nosso script
+        runs-on: ubuntu-latest
+        #aqui é iniciado o passo a passo para realizar o processo de publicação
+        steps:
+              #esse primeiro passo é onde o nosso repositório será clonado na máquina disponibilizada pelo Github
+            - name: Sincronizando com o Github
+              uses: actions/checkout@v3
+              #processo de transferência dos arquivos da maquina do Github 
+              #para o nosso servidor onde a aplicação será publicada
+            - name: Publicando
+              uses: SamKirkland/web-deploy@v1
+              with:
+                #host da nossa máquina
+                target-server: ${{ secrets.host }}
+                #usuário de acesso na nossa máquina
+                remote-user: ubuntu
+                #chave de acesso da nossa máquina
+                private-ssh-key: ${{ secrets.key }}
+                #caminho na nossa máquina para onde os arquivos serão transferidos
+                destination-path: /home/ubuntu/sistema
+              #feito a transferência dos arquivos, precisamos dar uma restart no PM2 
+              #para que ele suba os novos arquivos
+              #para isso iremos utilizar uma conexão SSH para rodarmos o comandos restart do PM2
+            - name: Aplicando as mudanças
+              uses: appleboy/ssh-action@v1.0.3
+              with:
+                host: ${{ secrets.host }}
+                username: ubuntu
+                key: ${{ secrets.key }}
+                port: 22
+                #server é nome da nossa aplicação no PM2
+                script: pm2 restart app
